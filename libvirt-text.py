@@ -1,5 +1,14 @@
 #!/usr/bin/python
 #-*- coding:utf8-*-
+'''
+    libvirt-text.py
+    ~~~~~~~~~~~~~~~~
+
+    note the detail
+
+    :copyright: (c) 2012 by Liu Chongyang.
+    :license: BSD, see LICENSE for more details.
+'''
 import libvirt
 import sys
 if __name__ == "__main__":
