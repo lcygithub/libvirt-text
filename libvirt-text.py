@@ -7,7 +7,6 @@
     note the detail
 
     :copyright: (c) 2012 by Liu Chongyang.
-    :license: BSD, see LICENSE for more details.
 '''
 import libvirt
 import sys
