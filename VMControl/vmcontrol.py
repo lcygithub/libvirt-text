@@ -177,8 +177,10 @@ class VMControl:
     #delete
     def delete(self):
         print "delete"
-        if os.system("rm " + self.exaddr) != 0:
-            print "Failed"
+        try:
+            os.remove(self.exaddr)
+        except:
+            print "Failed remove"
 
     #status
     def status(self):
