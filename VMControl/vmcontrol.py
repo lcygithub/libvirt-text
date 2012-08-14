@@ -24,7 +24,7 @@ class VMControl:
             return {"ok": False, "errmsg": "Failed connect to qemu:///system"}
         self.xmldesc = '''
           <domain type='kvm'>
-          <name>demo1</name>
+          <name>%s</name>
           <memory>524288</memory>
           <currentMemory>524288</currentMemory>
           <vcpu>1</vcpu>
@@ -74,7 +74,7 @@ class VMControl:
               <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
             </memballoon>
           </devices>
-        </domain>''' % self.exaddr
+        </domain>''' % (self.user, self.exaddr)
         print self.xmldesc
         self.STATUS = ["No state",
                         "The domain is running",
@@ -89,7 +89,7 @@ class VMControl:
         print "clone"
         if os.system("cp " + self.template + " " + self.exaddr) != 0:
             return {"ok": False, "errmsg": "Can not copy template to dir /vms/exps/"}
-        self.dom = self.conn.createXML(self.xmldesc, 0)
+        self.dom = self.conn.createLinux(self.xmldesc, 0)
         if self.dom == None:
             return {"ok": False, "errmsg": "Failed create dom"}
         return {"ok": True}
@@ -177,7 +177,8 @@ class VMControl:
     #delete
     def delete(self):
         print "delete"
-        os.system("rm " + self.exaddr)
+        if os.system("rm " + self.exaddr) != 0:
+            print "Failed"
 
     #status
     def status(self):
