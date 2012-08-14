@@ -11,6 +11,7 @@
 import libvirt
 # import sys
 import os
+import shutil
 
 
 class VMControl:
@@ -87,11 +88,14 @@ class VMControl:
     #clone
     def clone(self):
         print "clone"
-        if os.system("cp " + self.template + " " + self.exaddr) != 0:
+        shutil.copy(self.template, self.exaddr)
+        if not os.path.isfile(self.exaddr):
             return {"ok": False, "errmsg": "Can not copy template to dir /vms/exps/"}
         self.dom = self.conn.createLinux(self.xmldesc, 0)
         if self.dom == None:
             return {"ok": False, "errmsg": "Failed create dom"}
+        print "/vms/exps/:",
+        print os.listdir("/vms/exps/")
         return {"ok": True}
 
     #start
@@ -179,6 +183,8 @@ class VMControl:
         print "delete"
         try:
             os.remove(self.exaddr)
+            print "/vms/exps/:",
+            print os.listdir("/vms/exps/")
         except:
             print "Failed remove"
 
@@ -186,7 +192,7 @@ class VMControl:
     def status(self):
         print "status"
         try:
-            return  self.STATUS[self.dom.info()[0]]
+            return  {"staid": self.dom.info()[0], "stamsg": self.STATUS[self.dom.info()[0]]}
         except AttributeError:
             return "No domain"
 
