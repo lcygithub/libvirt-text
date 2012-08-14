@@ -1,0 +1,17 @@
+'''
+    VMControl
+    ~~~~~~~~~~~~~~~~
+
+    control the kvm: 
+        clone 
+        start
+        stop
+        shutoff
+        restart
+        delete
+        status
+
+        getIP
+
+    :copyright: (c) 2012 by Liu Chongyang.
+'''
