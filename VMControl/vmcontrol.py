@@ -18,11 +18,26 @@ class VMControl:
     def __init__(self, template, userid):
         self.template = template
         self.user = userid
-        self.exaddr = "/vms/exps/" + self.user + ".img"
-        print self.exaddr
         self.conn = libvirt.open("qemu:///system")
         if self.conn == None:
             return {"ok": False, "errmsg": "Failed connect to qemu:///system"}
+        self.STATUS = ["No state",
+                        "The domain is running",
+                        "The domain is blocked on resource",
+                        "The domain is paused by user",
+                        "The domain is being shut down",
+                        "The domain is shut off",
+                        "The domain is crashed"]
+
+    #configure
+    def config(self, exdir="/vms/exps/", interface="network", mac="52:54:00:19:25:7b",
+                gtype='vnc', gport='5910', glisten='0.0.0.0'):
+        self.exaddr = exdir + self.user + ".img"
+        self.interface = interface
+        self.gtype = gtype
+        self.gport = gport
+        self.glisten = glisten
+        self.mac = mac
         self.xmldesc = '''
           <domain type='kvm'>
           <name>%s</name>
@@ -49,8 +64,8 @@ class VMControl:
                 <source file='%s'/>
                 <target dev='hda'/>
             </disk>
-            <interface type='network'>
-              <mac address='52:54:00:19:25:7b'/>
+            <interface type='%s'>
+              <mac address='%s'/>
               <source network='default'/>
               <model type='virtio'/>
               <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
@@ -63,7 +78,7 @@ class VMControl:
             </console>
             <input type='tablet' bus='usb'/>
             <input type='mouse' bus='ps2'/>
-            <graphics type='vnc' port='5910' listen='0.0.0.0'/>
+            <graphics type='%s' port='%s' listen='%s'/>
             <sound model='ac97'>
               <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
             </sound>
@@ -75,15 +90,14 @@ class VMControl:
               <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
             </memballoon>
           </devices>
-        </domain>''' % (self.user, self.exaddr)
+        </domain>''' % (self.user, \
+                        self.exaddr, \
+                        self.interface,\
+                        self.mac, \
+                        self.gtype, \
+                        self.gport, \
+                        self.glisten)
         print self.xmldesc
-        self.STATUS = ["No state",
-                        "The domain is running",
-                        "The domain is blocked on resource",
-                        "The domain is paused by user",
-                        "The domain is being shut down",
-                        "The domain is shut off",
-                        "The domain is crashed"]
 
     #clone
     def clone(self):
