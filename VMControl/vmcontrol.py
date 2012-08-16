@@ -162,7 +162,7 @@ class VMControl:
         print "restart"
         try:
             if self.dom.info()[0] == 1:
-                if self.dom.shutdown() == 0:
+                if self.dom.destroy() == 0:
                     while self.dom.info == 1:
                         pass
                     if self.dom.info()[0] == 5:
