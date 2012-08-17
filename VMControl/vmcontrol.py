@@ -207,8 +207,8 @@ class VMControl:
         print "restart"
         try:
             if self.dom.info()[0] == 1:
-                if self.dom.destroy() == 0:
-                    while self.dom.info == 1:
+                if self.dom.shutdown() == 0:
+                    while self.dom.info()[0] == 1:
                         pass
                     if self.dom.info()[0] == 5:
                         if self.dom.create() != 0:
@@ -230,21 +230,37 @@ class VMControl:
                         return {"ok": True}
             else:
                 self.start()
-        except:
+        except AttributeError:
             print "open file"
             try:
-                self.dom = self.conn.createXML(self.xmldesc, 0)
+                print "defineXML"
+                try:
+                    if self.xmldesc:
+                        pass
+                except AttributeError:
+                    return {"ok": False, "msg": "No ddomain and please configure firstly"}
+                self.dom = self.conn.defineXML(self.xmldesc)
                 if self.dom == None:
                     return {"ok": False, "msg": "Failed create dom"}
-            except:
-                return {"ok": False, "msg": "No Domain"}
+                if self.dom.create() == 0:
+                        return {"ok": True}
+            except libvirt.libvirtError:
+                try:
+                    print "lookupByName"
+                    self.dom = self.conn.lookupByName(self.user)
+                    if self.dom == None:
+                        return {"ok": False, "msg": "Failed create dom"}
+                    if self.dom.create() == 0:
+                        return {"ok": True}
+                except AttributeError:
+                    return {"ok": False, "msg": "No ddomain and please configure firstly"}
 
     #delete
     def delete(self):
         print "delete"
         try:
-            os.remove(self.exaddr)
             print "/home/lcyang/vms/exps/:",
+            os.remove(self.exaddr)
             print os.listdir("/home/lcyang/vms/exps/")
         except:
             print "Failed remove"
