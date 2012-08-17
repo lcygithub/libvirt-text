@@ -15,9 +15,20 @@ import shutil
 
 
 class VMControl:
-    def __init__(self, template, userid):
-        self.template = template
+    def __init__(self, exdir="/home/lcyang/vms/exps/", \
+                        template="/home/lcyang/vms/templates/tinycore.img", \
+                        userid="lcyang", exid="ex1"):
+        '''
+            exdir:  experiment dir
+            template  template dir
+            userid  user id
+            exid  experiment id
+        '''
         self.user = userid
+        self.exdir = exdir
+        self.exaddr = exdir + self.user + ".img"
+        self.tepaddr = template
+        self.exid = exid
         self.conn = libvirt.open("qemu:///system")
         if self.conn == None:
             return {"ok": False, "errmsg": "Failed connect to qemu:///system"}
@@ -28,11 +39,18 @@ class VMControl:
                         "The domain is being shut down",
                         "The domain is shut off",
                         "The domain is crashed"]
+        print "user:", self.user
+        print "experiment id:", self.exid
+        if os.path.isfile(self.exaddr):
+            print "experiment addr:", self.exaddr, " [exit]"
+        else:
+            print "experiment addr:", self.exaddr
+        print "template addr:", self.tepaddr
+        print "connection:", self.conn
 
     #configure
-    def config(self, exdir="/vms/exps/", interface="network", mac="52:54:00:19:25:7b",
+    def config(self, interface="network", mac="52:54:00:19:25:7b",
                 gtype='vnc', gport='5910', glisten='0.0.0.0'):
-        self.exaddr = exdir + self.user + ".img"
         self.interface = interface
         self.gtype = gtype
         self.gport = gport
@@ -102,14 +120,31 @@ class VMControl:
     #clone
     def clone(self):
         print "clone"
-        shutil.copy(self.template, self.exaddr)
+        try:
+            self.dom = self.conn.lookupByName(self.user)
+            return {"ok": False, "errmsg": "Failed to clone the domain is already exit"}
+        except libvirt.libvirtError:
+            pass
+        try:
+            if not self.xmldesc:
+                return {"ok": False, "errmsg": "Please config vm firstly."}
+        except:
+            return {"ok": False, "errmsg": "Please config vm firstly."}
+        if os.path.isfile(self.exaddr):
+            print "delete ", self.exaddr
+            os.remove(self.exaddr)
+        print "copy from ", self.tepaddr, " to ", self.exaddr
+        shutil.copy(self.tepaddr, self.exaddr)
         if not os.path.isfile(self.exaddr):
-            return {"ok": False, "errmsg": "Can not copy template to dir /vms/exps/"}
-        self.dom = self.conn.createLinux(self.xmldesc, 0)
+            return {"ok": False, "errmsg": "Can not copy template to experiment dir %s." % self.exdir}
+        print "create dom"
+        try:
+            self.dom = self.conn.defineXML(self.xmldesc)
+        except libvirt.libvirtError:
+            self.dom = self.conn.lookupByName(self.user)
         if self.dom == None:
-            return {"ok": False, "errmsg": "Failed create dom"}
-        print "/vms/exps/:",
-        print os.listdir("/vms/exps/")
+            return {"ok": False, "errmsg": "Failed to create dom"}
+        print self.exdir, ":", os.listdir(self.exdir)
         return {"ok": True}
 
     #start
@@ -139,8 +174,18 @@ class VMControl:
             elif self.dom.info()[0] == 3:
                 return {"ok": False, "msg": "The domain is paused by user"}
             elif self.dom.info()[0] == 1:
-                if self.dom.destroy() == 0:
-                    return {"ok": True}
+                if self.dom.shutdown() == 0:
+                    if self.dom.info()[0] == 1:
+                        if self.dom.destroy() == 0:
+                            if self.dom.info()[0] == 5:
+                                return {"ok": True}
+                    elif self.dom.info()[0] == 4:
+                        while self.dom.info()[0] == 4:
+                            pass
+                        if self.dom.info()[0] == 5:
+                            return {"ok": True}
+                    else:
+                        return {"ok": False, "msg": "Can not stop domain"}
                 else:
                     return {"ok": False, "msg": "Can not stop domain"}
         except:
@@ -183,6 +228,8 @@ class VMControl:
                         if self.dom.create() != 0:
                             return {"ok": False, "msg": "Can not start the domain"}
                         return {"ok": True}
+            else:
+                self.start()
         except:
             print "open file"
             try:
@@ -197,8 +244,8 @@ class VMControl:
         print "delete"
         try:
             os.remove(self.exaddr)
-            print "/vms/exps/:",
-            print os.listdir("/vms/exps/")
+            print "/home/lcyang/vms/exps/:",
+            print os.listdir("/home/lcyang/vms/exps/")
         except:
             print "Failed remove"
 
