@@ -3,6 +3,7 @@
     ~~~~~~~~~~~~~~~~
 
     control the kvm: 
+        config
         clone 
         start
         stop
