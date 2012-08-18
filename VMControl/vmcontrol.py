@@ -9,7 +9,6 @@
     :copyright: (c) 2012 by Liu Chongyang.
 '''
 import libvirt
-# import sys
 import os
 import shutil
 
@@ -49,13 +48,12 @@ class VMControl:
         print "connection:", self.conn
 
     #configure
-    def config(self, interface="network", mac="52:54:00:19:25:7b",
+    def config(self, interface="network",
                 gtype='vnc', gport='5910', glisten='0.0.0.0'):
         self.interface = interface
         self.gtype = gtype
         self.gport = gport
         self.glisten = glisten
-        self.mac = mac
         self.xmldesc = '''
           <domain type='kvm'>
           <name>%s</name>
@@ -83,7 +81,6 @@ class VMControl:
                 <target dev='hda'/>
             </disk>
             <interface type='%s'>
-              <mac address='%s'/>
               <source network='default'/>
               <model type='virtio'/>
               <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
@@ -111,7 +108,6 @@ class VMControl:
         </domain>''' % (self.user, \
                         self.exaddr, \
                         self.interface,\
-                        self.mac, \
                         self.gtype, \
                         self.gport, \
                         self.glisten)
@@ -128,7 +124,7 @@ class VMControl:
         try:
             if not self.xmldesc:
                 return {"ok": False, "errmsg": "Please config vm firstly."}
-        except:
+        except AttributeError:
             return {"ok": False, "errmsg": "Please config vm firstly."}
         if os.path.isfile(self.exaddr):
             print "delete ", self.exaddr
@@ -160,7 +156,7 @@ class VMControl:
                     return {"ok": True, "msg": "Starting..."}
                 else:
                     return {"ok": False, "msg": "Failed to start the domain"}
-        except:
+        except AttributeError:
             return {"ok": False, "msg": "No domain"}
 
     #stop
@@ -188,7 +184,7 @@ class VMControl:
                         return {"ok": False, "msg": "Can not stop domain"}
                 else:
                     return {"ok": False, "msg": "Can not stop domain"}
-        except:
+        except AttributeError:
             return {"ok": False, "msg": "No domain"}
 
     #shutoff
@@ -199,7 +195,7 @@ class VMControl:
                 if self.dom.destroy() != 0:
                     return {"ok": False, "msg": "Can not shutoff"}
                 return {"ok": True}
-        except:
+        except AttributeError:
             return {"ok": False, "msg": "No Domain"}
 
     #restart
@@ -262,7 +258,7 @@ class VMControl:
             print "/home/lcyang/vms/exps/:",
             os.remove(self.exaddr)
             print os.listdir("/home/lcyang/vms/exps/")
-        except:
+        except OSError:
             print "Failed remove"
 
     #status
