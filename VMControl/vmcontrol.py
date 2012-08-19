@@ -11,6 +11,7 @@
 import libvirt
 import os
 import shutil
+import libxml2
 
 
 class VMControl:
@@ -49,7 +50,7 @@ class VMControl:
 
     #configure
     def config(self, interface="network",
-                gtype='vnc', gport='5910', glisten='0.0.0.0'):
+                    gtype='vnc', gport='5910', glisten='127.0.0.2'):
         self.interface = interface
         self.gtype = gtype
         self.gport = gport
@@ -272,3 +273,17 @@ class VMControl:
     #getIP
     def getIP(self):
         print "getIP"
+        Dnsdic = {}
+        Dfile = open("/usr/local/var/lib/libvirt/dnsmasq/default.leases")
+        content = Dfile.read()
+        for line in content.split("\n"):
+            if len(line.split(" ")) > 1:
+                Dnsdic[line.split(" ")[1]] = line.split(" ")[2]
+        print Dnsdic
+        xmldesc = self.dom.XMLDesc(0)
+        doc = libxml2.parseDoc(xmldesc)
+        ctx = doc.xpathNewContext()
+        res = ctx.xpathEval("/domain/devices/interface/mac/@address")
+        print "Mac:", res[0].content,
+        print "IP:", Dnsdic[res[0].content]
+        return Dnsdic[res[0].content]
