@@ -142,6 +142,14 @@ class VMControl:
         if self.dom == None:
             return {"ok": False, "errmsg": "Failed to create dom"}
         print self.exdir, ":", os.listdir(self.exdir)
+        Dnsdic = {}
+        Dfile = open("/usr/local/var/lib/libvirt/dnsmasq/default.leases")
+        content = Dfile.read()
+        Dfile.close()
+        for line in content.split("\n"):
+            if len(line.split(" ")) > 1:
+                Dnsdic[line.split(" ")[1]] = line.split(" ")[2]
+        print Dnsdic
         return {"ok": True}
 
     #start
@@ -273,17 +281,22 @@ class VMControl:
     #getIP
     def getIP(self):
         print "getIP"
-        Dnsdic = {}
-        Dfile = open("/usr/local/var/lib/libvirt/dnsmasq/default.leases")
-        content = Dfile.read()
-        for line in content.split("\n"):
-            if len(line.split(" ")) > 1:
-                Dnsdic[line.split(" ")[1]] = line.split(" ")[2]
-        print Dnsdic
         xmldesc = self.dom.XMLDesc(0)
         doc = libxml2.parseDoc(xmldesc)
         ctx = doc.xpathNewContext()
         res = ctx.xpathEval("/domain/devices/interface/mac/@address")
+        Dnsdic = {}
+        Dfile = open("/usr/local/var/lib/libvirt/dnsmasq/default.leases")
+        content = Dfile.read()
+        Dfile.close()
+        for line in content.split("\n"):
+            if len(line.split(" ")) > 1:
+                Dnsdic[line.split(" ")[1]] = line.split(" ")[2]
+        print Dnsdic
         print "Mac:", res[0].content,
-        print "IP:", Dnsdic[res[0].content]
-        return Dnsdic[res[0].content]
+        try:
+            print "IP:", Dnsdic[res[0].content]
+            return {"ok": True, "ip": Dnsdic[res[0].content]}
+        except KeyError:
+            print
+            return {"ok": False, "msg": "Please start vm machine or wait the dnsmasq allocate ip"}
